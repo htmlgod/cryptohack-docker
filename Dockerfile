@@ -1,17 +1,20 @@
-FROM sagemath/sagemath:latest
+FROM sagemathinc/sagemath-core-arm64:10.5
 
 USER root
 
 RUN apt-get -qq update \
     && apt-get -qq install -y --no-install-recommends \
-    netcat \
+    netcat-traditional \
     tmux \
     vim \
     && rm -rf /var/lib/apt/lists/*
 
+RUN useradd -ms /bin/bash sage
+
 USER sage
 
 RUN sage -pip install \
+    capstone==5.0.6 \
     pwntools \
     pyCryptoDome \
     z3-solver
@@ -19,6 +22,8 @@ RUN sage -pip install \
 COPY --chown=sage:sage cryptohack_example.ipynb .
 COPY --chown=sage:sage z3_example.ipynb .
 COPY --chown=sage:sage custom.css /home/sage/.sage/jupyter-4.1/custom/custom.css
+
+EXPOSE 8888
 
 ENV PWNLIB_NOTERM=true
 
@@ -34,6 +39,4 @@ ${YELLOW}CryptoHack Docker Container${NOCOLOR} \n\
 ${RED}After Jupyter starts, visit http://127.0.0.1:8888${NOCOLOR} \n\
 ${BLUE}----------------------------------${NOCOLOR} \n\
 "
-
-CMD ["echo -e $BANNER && sage -n jupyter --NotebookApp.token='' --no-browser --ip='0.0.0.0' --port=8888"]
-
+CMD ["/bin/bash", "-c", "echo -e $BANNER && sage -n jupyter --NotebookApp.token='' --no-browser --ip='0.0.0.0' --port=8888"]
